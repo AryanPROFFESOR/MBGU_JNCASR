@@ -1,56 +1,59 @@
-
-const { Engine, Render, World, Bodies, Body } = Matter;
+// Load Matter.js modules
+const Engine = Matter.Engine,
+      Render = Matter.Render,
+      Runner = Matter.Runner,
+      World = Matter.World,
+      Bodies = Matter.Bodies,
+      Body = Matter.Body,
+      Events = Matter.Events,
+      Constraint = Matter.Constraint,
+      Composite = Matter.Composite;
 
 const engine = Engine.create();
 const world = engine.world;
 
-const canvas = document.createElement("canvas");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-document.body.appendChild(canvas);
-
+// Create renderer
 const render = Render.create({
-  canvas: canvas,
+  element: document.body,
   engine: engine,
   options: {
     width: window.innerWidth,
     height: window.innerHeight,
+    background: '#ffffff',
     wireframes: false,
-    background: "transparent"
+    pixelRatio: window.devicePixelRatio
   }
 });
 
-const dnas = [];
-const numDNAs = 20; // more DNAs
+// Create DNA bodies
+const dnaBodies = [];
+const connections = [];
 
-for (let i = 0; i < numDNAs; i++) {
-  const body = Bodies.rectangle(
+for (let i = 0; i < 15; i++) {
+  let dna = Bodies.circle(
     Math.random() * window.innerWidth,
     Math.random() * window.innerHeight,
-    80,
-    80,
+    30,
     {
-      render: {
-        sprite: {
-          texture: 'DNA_IMAGE.png',
-          xScale: 0.2,
-          yScale: 0.2
-        }
-      },
       restitution: 1,
       friction: 0,
-      frictionAir: 0.001
+      frictionAir: 0,
+      render: {
+        sprite: {
+          texture: "DNA_IMAGE.png",
+          xScale: 0.15,
+          yScale: 0.15
+        }
+      }
     }
   );
-  Body.setVelocity(body, {
-    x: (Math.random() - 0.5) * 10,
-    y: (Math.random() - 0.5) * 10
-  });
-  dnas.push(body);
+  dnaBodies.push(dna);
 }
 
-World.add(world, dnas);
+// Add DNA to world
+World.add(world, dnaBodies);
 
+// Walls
 const walls = [
   Bodies.rectangle(window.innerWidth / 2, 0, window.innerWidth, 10, { isStatic: true }),
   Bodies.rectangle(window.innerWidth / 2, window.innerHeight, window.innerWidth, 10, { isStatic: true }),
@@ -59,10 +62,46 @@ const walls = [
 ];
 World.add(world, walls);
 
+// Create "connection" constraints when DNAs are close
+Events.on(engine, 'afterUpdate', function () {
+  connections.forEach(c => Composite.remove(world, c));
+  connections.length = 0;
+
+  for (let i = 0; i < dnaBodies.length; i++) {
+    for (let j = i + 1; j < dnaBodies.length; j++) {
+      let dx = dnaBodies[i].position.x - dnaBodies[j].position.x;
+      let dy = dnaBodies[i].position.y - dnaBodies[j].position.y;
+      let dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < 150) {
+        const constraint = Constraint.create({
+          bodyA: dnaBodies[i],
+          bodyB: dnaBodies[j],
+          length: dist,
+          stiffness: 0.001,
+          render: {
+            visible: true,
+            lineWidth: 1,
+            strokeStyle: '#000000'
+          }
+        });
+        connections.push(constraint);
+        Composite.add(world, constraint);
+      }
+    }
+  }
+});
+
+// Run engine & renderer
 Engine.run(engine);
 Render.run(render);
 
-window.addEventListener('resize', () => {
+// Runner to keep it smooth
+const runner = Runner.create();
+Runner.run(runner, engine);
+
+// Resize handler
+window.addEventListener("resize", function () {
   render.canvas.width = window.innerWidth;
   render.canvas.height = window.innerHeight;
 });
