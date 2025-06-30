@@ -10,32 +10,32 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 40px;
-  background: rgba(0, 0, 0, 0.7);
+  padding: 15px 40px;
+  background: ivory; /* <-- new ivory background color */
   position: fixed;
   top: 0;
+  left: 0;
   width: 100%;
-  z-index: 10;
-  height: 60px;
-  box-sizing: border-box;
-}
-
-header .logo {
-  color: white;
-  font-weight: bold;
-  font-size: 1.2em;
+  border-bottom: 1px solid #ddd;
+  z-index: 1000;
 }
 
 header nav a {
-  color: white;
+  color: #000; /* black text on ivory background */
   text-decoration: none;
-  margin: 0 10px;
+  margin-left: 20px;
   transition: color 0.3s;
 }
 
 header nav a:hover {
-  color: #00ffff;
+  color: #555;
 }
+
+.logo {
+  font-weight: bold;
+  font-size: 20px;
+}
+
 
 main {
   margin-top: 100px;
